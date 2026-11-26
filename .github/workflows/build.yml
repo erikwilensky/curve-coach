@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 17
@@ -39,10 +39,18 @@ jobs:
       - name: Reuse signing key
         uses: actions/cache@v4
         with:
-          path: ~/.android/debug.keystore
-          key: debug-keystore-v1
+          path: .ci/debug.keystore
+          key: debug-keystore-v2
+
+      - name: Make signing key if none was kept
+        run: |
+          mkdir -p .ci
+          [ -f .ci/debug.keystore ] || keytool -genkeypair -keystore .ci/debug.keystore -storepass android \
+            -keypass android -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
 
       - name: Build app
+        env:
+          CI_KEYSTORE: ${{ github.workspace }}/.ci/debug.keystore
         run: ./gradlew :app:assembleDebug
 
       - name: Name the app file

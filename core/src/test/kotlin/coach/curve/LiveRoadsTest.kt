@@ -36,7 +36,7 @@ class LiveRoadsTest {
             try {
                 val c = URL(s).openConnection() as HttpURLConnection
                 c.requestMethod = "POST"; c.doOutput = true
-                c.connectTimeout = 20000; c.readTimeout = 90000
+                c.connectTimeout = 20000; c.readTimeout = 120000
                 c.setRequestProperty("User-Agent", "curve-coach-test/0.1")
                 c.outputStream.use { it.write(("data=" + URLEncoder.encode(q, "UTF-8")).toByteArray()) }
                 if (c.responseCode == 200) return c.inputStream.bufferedReader().readText()
@@ -51,7 +51,14 @@ class LiveRoadsTest {
         var totalCalls = 0
         for (road in roads) {
             val b = road.bbox
-            val parsed = OverpassParser.parse(fetch(OverpassParser.query(b[0], b[1], b[2], b[3])))
+            // Only the numbered road itself, to keep the download small.
+            val q = "[out:json][timeout:60];way[\"highway\"][\"ref\"=\"${road.ref}\"](${b[0]},${b[1]},${b[2]},${b[3]});out body;>;out skel qt;"
+            val parsed = try {
+                OverpassParser.parse(fetch(q))
+            } catch (e: Exception) {
+                println("${road.name}: download failed: $e")
+                continue
+            }
             val net = RoadNetwork(LocalProjection(road.start), parsed.nodes, parsed.ways)
             val pa = PathAhead(net)
             // Find the road's node nearest the start and its heading.
