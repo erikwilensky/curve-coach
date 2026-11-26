@@ -31,10 +31,12 @@ class Announcer(
         val trigger = max(minLeadM, speedMps * leadSeconds)
         for ((idx, c) in curves.withIndex()) {
             if (c.startM > trigger) break
-            if (c.apexM < 10) continue
             if (wasCalled(c.apex)) continue
             val advised = advisor.entryKmh(c.radiusM)
             remember(c.apex)
+            // Already in the bend: usually the tail of one we called, seen again from inside.
+            // Too late to help anyway, so stay quiet.
+            if (c.startM < 25) continue
             if (!callAll && advised >= speedKmh + 5) continue
             if (advised >= advisor.maxKmh) continue
             val sb = StringBuilder(describe(c, advised))

@@ -56,6 +56,12 @@ class RideEngineTest {
         assertTrue(1000 - where in 100.0..200.0, "called at $where")
     }
 
+    @Test fun quietInsideABend() {
+        val a = Announcer(SpeedAdvisor())
+        val c = Curve(Side.LEFT, startM = 0.0, apexM = 20.0, endM = 60.0, radiusM = 40.0, turnDeg = 60.0, apex = Xy(0.0, 0.0))
+        assertNull(a.update(listOf(c), 20.0))
+    }
+
     @Test fun nothingWhenStoppedOrOffRoad() {
         val engine = RideEngine(SpeedAdvisor())
         engine.setNetwork(network())
